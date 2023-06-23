@@ -15,7 +15,7 @@ import re
 import sys
 
 if len(sys.argv) != 2:
-    print("Usage: %s FILE" % sys.argv[0])
+    print(f"Usage: {sys.argv[0]} FILE")
     sys.exit(2)
 
 readelf = os.getenv("READELF", "readelf")
@@ -36,9 +36,8 @@ num_errors = 0
 func = False
 slots = 0
 rlen_sum = 0
-for line in os.popen("%s -u %s" % (readelf, sys.argv[1])):
-    m = start_pattern.match(line)
-    if m:
+for line in os.popen(f"{readelf} -u {sys.argv[1]}"):
+    if m := start_pattern.match(line):
         check_func(func, slots, rlen_sum)
 
         func  = m.group(1)
@@ -47,18 +46,13 @@ for line in os.popen("%s -u %s" % (readelf, sys.argv[1])):
         slots = 3 * (end - start) / 16
         rlen_sum = 0
         num_funcs += 1
-    else:
-        m = rlen_pattern.match(line)
-        if m:
-            rlen_sum += int(m.group(1))
+    elif m := rlen_pattern.match(line):
+        rlen_sum += int(m.group(1))
 check_func(func, slots, rlen_sum)
 
 if num_errors == 0:
     print("No errors detected in %u functions." % num_funcs)
 else:
-    if num_errors > 1:
-        err="errors"
-    else:
-        err="error"
+    err = "errors" if num_errors > 1 else "error"
     print("%u %s detected in %u functions." % (num_errors, err, num_funcs))
     sys.exit(1)
